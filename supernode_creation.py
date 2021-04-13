@@ -25,13 +25,16 @@ def hash_func(rnge, seed):
 
 
 def minhash(set_a, set_b, hashes, seed):
+    hashedset = []
     for elem in set_a:
-
-    for elem in set_b:
+        hashedset.append(hash_func(2**32, seed)(elem))
+    return min(hashedset)
 
 class SuperNodeCreator:
     def __init__(self, graph, num_hashes, compression_factor):
-        pass
+        self.graph = graph
+        self.num_hashes = num_hashes
+        self.compression_factor = compression_factor
     def insert_node(self, node):
         pass
     def delete_node(self, node):
@@ -51,7 +54,11 @@ class SuperNodeCreator:
     def get_subnodes(self, supernode):
         pass
 
-def lsh(set_a, set_b):
-    for
+def lsh(set_a):
+    return 0
 
 
+def compress(graph):
+    newgraph = {}
+    for i in graph.keys():
+        newgraph[i] = lsh(graph[i])
