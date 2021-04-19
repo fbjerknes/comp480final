@@ -154,3 +154,6 @@ def generate_hashcodes(s, k, l, funcs):
     for i in range(l):
         hashcodes.append(minhash(s, k, funcs[i]))
     return hashcodes
+
+
+
