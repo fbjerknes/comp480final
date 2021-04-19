@@ -26,9 +26,6 @@ def find_next_prime(n):
 def hash_func(rnge, seed):
     return lambda s: ((mmh3.hash(s.encode('utf-8'),seed=seed)) % find_next_prime(rnge)) % rnge
 
-
-
-
 def minhash(set_a, set_b, hashes, seed):
     hashedset = []
     for elem in set_a:
@@ -155,5 +152,29 @@ def generate_hashcodes(s, k, l, funcs):
         hashcodes.append(minhash(s, k, funcs[i]))
     return hashcodes
 
+
+def dist(graph_1, graph_2):
+    distsum = 0
+    for u in graph_1.keys():
+        for v in graph_1.keys():
+            weight1 = graph_1[u][v]
+            weight2 = graph_2[u][v]
+            diffsq = (weight2 - weight1) ** 2
+            distsum += diffsq
+    return distsum
+
+
+def create_supernode(graph, query_node, edr_threshold):
+    query_neighbors = graph[query_node]
+    nqsize = len(query_neighbors.keys())
+    for node in graph.keys():
+        other_neighbors = graph[node]
+        nvsize = len(other_neighbors.keys())
+        potential_compression = query_neighbors | other_neighbors
+        nssize = len(potential_compression.keys())
+        edr = (nqsize + nvsize - nssize) / (nqsize + nvsize)
+        if (edr > edr_threshold):
+            graph[query_node] = potential_compression
+            del graph[node]
 
 
