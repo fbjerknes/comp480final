@@ -62,3 +62,17 @@ def compress(graph):
     newgraph = {}
     for i in graph.keys():
         newgraph[i] = lsh(graph[i])
+
+def dist(graph_1, graph_2):
+    distsum = 0
+    for u in graph_1.keys():
+        for v in graph_1.keys():
+            weight1 = graph_1[u][v]
+            weight2 = graph_2[u][v]
+            diffsq = (weight2 - weight1) ** 2
+            distsum += diffsq
+    return distsum
+
+def create_supernode(graph, query_node, edr){
+
+}
