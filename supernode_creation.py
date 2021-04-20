@@ -13,17 +13,8 @@ import time
 
 
 
-def find_next_prime(n):
-    prime_cand = n
-    while (True):
-        for i in range(2, int(np.floor(n ** (1/2))) + 1):
-            if (prime_cand % i == 0):
-                prime_cand += 1
-                break
-        return prime_cand
 
-def hash_func(rnge, seed):
-    return lambda s: ((mmh3.hash(s.encode('utf-8'),seed=seed)) % find_next_prime(rnge)) % rnge
+
 
 def minhash(set_a, set_b, hashes, seed):
     hashedset = []
@@ -85,9 +76,9 @@ def minhash(A, m, hashes):
     for i in range(m):
         cur = hashes[i]
         vals = []
-        for j in range(len(A)):
-            vals.append(cur(A[j]))
-        hashvalues.append(min(vals))
+        for j in A:
+            vals.append(cur(j))
+        hashvalues.append(0 if len(vals) == 0 else min(vals))
     return hashvalues
 
 
@@ -158,17 +149,29 @@ def get_candidates(k, l, r, graph, query_node):
 def create_supernode(graph, query_node, edr_threshold, list_of_candidates):
     query_neighbors = graph[query_node]
     nqsize = len(query_neighbors.keys())
-
+    if not graph[query_node]:
+        return
     for node in list_of_candidates:
-        other_neighbors = graph[node]
-        nvsize = len(other_neighbors.keys())
-        potential_compression = query_neighbors | other_neighbors
-        nssize = len(potential_compression.keys())
-        edr = (nqsize + nvsize - nssize) / (nqsize + nvsize)
+        if node != query_node:
+            other_neighbors = graph[node]
+            nvsize = len(other_neighbors.keys())
+            potential_compression = query_neighbors | other_neighbors
+            nssize = len(potential_compression.keys())
+            edr = (nqsize + nvsize - nssize) / (nqsize + nvsize)
+            print(nqsize)
+            print(nvsize)
+            print(potential_compression)
+            print(nssize)
+            print(edr)
+            if (edr > edr_threshold):
+                for nbr in graph[node].keys():
+                    wgt = graph[node][nbr]
+                    if nbr not in graph[query_node].keys() or wgt < graph[query_node][nbr]:
+                        graph[nbr][query_node] = wgt
+                        graph[query_node][nbr] = wgt
+                    del graph[nbr][node]
+                del graph[node]
 
-        if (edr > edr_threshold):
-            graph[query_node] = potential_compression
-            del graph[node]
 
 
 def upa(n, m):
@@ -219,7 +222,7 @@ def erdos_renyi(n, p):
 
     ### Add n nodes to the graph
     for node in range(n):
-        g[node] = set()
+        g[node] = {}
 
     ### Iterate through each possible edge and add it with
     ### probability p.
@@ -227,8 +230,9 @@ def erdos_renyi(n, p):
         for v in range(u + 1, n):
             r = random.random()
             if r < p:
-                g[u].add(v)
-                g[v].add(u)
+                w = random.randint(1, 10)
+                g[u][v] = w
+                g[v][u] = w
 
     return g
 
@@ -292,3 +296,20 @@ def distinct_multinomial(ntrials, probs):
     ### turn the results into a list of indices without duplicates
     result = [i for i, v in enumerate(mult) if v > 0]
     return result
+
+g1 = erdos_renyi(20, 0.14)
+#print(g1)
+g2 = {0: {2: 3, 3: 4, 4: 1}, 1: {2: 2, 3: 7, 4: 1, 5: 4}, 2: {0: 3, 1 : 2}, 3: {0: 4, 1 : 7}, 4: {0: 1, 1 : 1}, 5: {1 : 4}}
+
+k = 2
+l = 10
+r = 2 ** 12
+
+print(g1)
+
+for i in range(5):
+    if i in g1.keys():
+        g_candidates = get_candidates(k, l, r, g1, i)
+        print(g_candidates)
+        create_supernode(g1, i, 0.05, g_candidates)
+        print(g1)
