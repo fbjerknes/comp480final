@@ -155,7 +155,7 @@ def create_supernode(graph, query_node, edr_threshold, list_of_candidates):
     for node in list_of_candidates:
         query_neighbors = graph[query_node]
         nqsize = len(query_neighbors.keys())
-        if node != query_node:
+        if node in graph and node != query_node:
             other_neighbors = graph[node]
             nvsize = len(other_neighbors.keys())
             potential_compression = query_neighbors | other_neighbors
@@ -249,8 +249,10 @@ for i in range(5):
         create_supernode(g1, i, 0.05, g_candidates)
         print(g1)
 
-
-g3 = erdos_renyi(10000, 0.005)
+timeE1 = time.time()
+g3 = erdos_renyi(10000, 0.00025)
+timeE2 = time.time()
+print(str(timeE2 - timeE1))
 g4 = copy.deepcopy(g3)
 time1 = time.time()
 hg3, hf3 = hash_graph(k, l, r, g3)
@@ -261,7 +263,7 @@ for i in range(25):
 time2 = time.time()
 print(str(time2 - time1))
 time3 = time.time()
-for i in range(25):
+for i in range(100):
     if i in g4.keys():
         g4_candidates = list(g4.keys())
         create_supernode(g4, i, 0.05, g4_candidates)
