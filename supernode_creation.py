@@ -263,7 +263,7 @@ for i in range(25):
 time2 = time.time()
 print(str(time2 - time1))
 time3 = time.time()
-for i in range(100):
+for i in range(500):
     if i in g4.keys():
         g4_candidates = list(g4.keys())
         create_supernode(g4, i, 0.05, g4_candidates)
