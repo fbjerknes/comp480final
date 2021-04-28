@@ -136,15 +136,17 @@ def dist(graph_1, graph_2):
             distsum += diffsq
     return distsum
 
-
-def get_candidates(k, l, r, graph, query_node):
+def hash_graph(k, l, r, graph):
     graph_lsh = HashTable(k, l, r)
     hash_funcs = produce_hash(k, l)
     for i in graph.keys():
         codes = generate_hashcodes(graph[i].keys(), k, l, hash_funcs)
         graph_lsh.insert(codes, i)
+    return graph_lsh, hash_funcs
+
+def get_candidates(graph, k, l, r, hashed_graph, query_node, hash_funcs):
     query_codes = generate_hashcodes(graph[query_node].keys(), k, l, hash_funcs)
-    return graph_lsh.lookup(query_codes)
+    return hashed_graph.lookup(query_codes)
 
 
 def create_supernode(graph, query_node, edr_threshold, list_of_candidates):
@@ -235,25 +237,26 @@ g1 = erdos_renyi(20, 0.14)
 g2 = {0: {2: 3, 3: 4, 4: 1}, 1: {2: 2, 3: 7, 4: 1, 5: 4}, 2: {0: 3, 1 : 2}, 3: {0: 4, 1 : 7}, 4: {0: 1, 1 : 1}, 5: {1 : 4}}
 
 k = 2
-l = 10
+l = 5
 r = 2 ** 12
 
 print(g1)
-
+hg1, hf1 = hash_graph(k, l, r, g1)
 for i in range(5):
     if i in g1.keys():
-        g_candidates = get_candidates(k, l, r, g1, i)
+        g_candidates = get_candidates(g1, k, l, r, hg1, i, hf1)
         print(g_candidates)
         create_supernode(g1, i, 0.05, g_candidates)
         print(g1)
 
 
-g3 = erdos_renyi(2000, 0.05)
+g3 = erdos_renyi(10000, 0.005)
 g4 = copy.deepcopy(g3)
 time1 = time.time()
+hg3, hf3 = hash_graph(k, l, r, g3)
 for i in range(25):
     if i in g3.keys():
-        g3_candidates = get_candidates(k, l, r, g3, i)
+        g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
         create_supernode(g3, i, 0.05, g3_candidates)
 time2 = time.time()
 print(str(time2 - time1))
