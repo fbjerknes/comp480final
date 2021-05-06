@@ -13,7 +13,7 @@ import time
 import copy
 
 
-
+NODES_MERGED_THRESHOLD = 1000
 
 
 
@@ -130,8 +130,14 @@ def dist(graph_1, graph_2):
     distsum = 0
     for u in graph_1.keys():
         for v in graph_1.keys():
-            weight1 = graph_1[u][v]
-            weight2 = graph_2[u][v]
+            if v in graph_1[u].keys():
+                weight1 = graph_1[u][v]
+            else:
+                weight1 = 0
+            weight2 = 0
+            if u in graph_2.keys():
+                if v in graph_2[u].keys():
+                    weight2 = graph_2[u][v]
             diffsq = (weight2 - weight1) ** 2
             distsum += diffsq
     return distsum
@@ -150,8 +156,9 @@ def get_candidates(graph, k, l, r, hashed_graph, query_node, hash_funcs):
 
 
 def create_supernode(graph, query_node, edr_threshold, list_of_candidates):
+    nodes_merged = 0
     if query_node not in graph or not graph[query_node]:
-        return
+        return 0
     for node in list_of_candidates:
         query_neighbors = graph[query_node]
         nqsize = len(query_neighbors.keys())
@@ -163,6 +170,7 @@ def create_supernode(graph, query_node, edr_threshold, list_of_candidates):
             edr = (nqsize + nvsize - nssize) / (nqsize + nvsize)
             # print(edr)
             if (edr > edr_threshold):
+                nodes_merged += 1
                 for nbr in graph[node].keys():
                     if nbr == node:
                         continue
@@ -172,7 +180,7 @@ def create_supernode(graph, query_node, edr_threshold, list_of_candidates):
                         graph[query_node][nbr] = wgt
                     del graph[nbr][node]
                 del graph[node]
-
+    return nodes_merged
 
 def erdos_renyi(n, p):
     """
@@ -254,18 +262,29 @@ g3 = erdos_renyi(10000, 0.00025)
 timeE2 = time.time()
 print(str(timeE2 - timeE1))
 g4 = copy.deepcopy(g3)
+g5 = copy.deepcopy(g3)
 time1 = time.time()
 hg3, hf3 = hash_graph(k, l, r, g3)
-for i in range(25):
+nodes_merged = 0
+for i in range(len(g3)):
     if i in g3.keys():
         g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
-        create_supernode(g3, i, 0.05, g3_candidates)
+        nodes_merged += create_supernode(g3, i, 0.05, g3_candidates)
+    if nodes_merged > NODES_MERGED_THRESHOLD:
+        break
+print("Nodes Merged with LSH: " + str(nodes_merged))
 time2 = time.time()
 print(str(time2 - time1))
 time3 = time.time()
-for i in range(500):
+nm = 0
+for i in range(len(g4)):
     if i in g4.keys():
         g4_candidates = list(g4.keys())
-        create_supernode(g4, i, 0.05, g4_candidates)
+        nm += create_supernode(g4, i, 0.05, g4_candidates)
+    if nm > NODES_MERGED_THRESHOLD:
+        break
+print("Nodes Merged without LSH: " + str(nm))
 time4 = time.time()
 print(str(time4 - time3))
+print("distance between graphs, with LSH: " + str(dist(g3, g5)))
+print("distance between graphs, without LSH: " + str(dist(g4, g5)))
