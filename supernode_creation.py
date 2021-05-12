@@ -6,7 +6,7 @@ import sys
 import csv
 import matplotlib.pyplot as plt
 import sys
-import mmh3
+#import mmh3
 from collections import defaultdict
 from sklearn.utils import murmurhash3_32
 import time
@@ -273,8 +273,8 @@ def upa(n, m):
             g[new_node] = set()
             for idx in mult:
                 node = nodes[idx]
-                g[new_node].add(node)
-                g[node].add(new_node)
+                g[new_node][node] = 1
+                g[node][new_node] = 1
     return g
 
 
@@ -294,10 +294,10 @@ def make_complete_graph(num_nodes):
     result = {}
 
     for node_key in range(num_nodes):
-        result[node_key] = set()
+        result[node_key] = {}
         for node_value in range(num_nodes):
             if node_key != node_value:
-                result[node_key].add(node_value)
+                result[node_key][node_value] = 1
 
     return result
 
