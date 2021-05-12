@@ -11,12 +11,41 @@ from collections import defaultdict
 from sklearn.utils import murmurhash3_32
 import time
 import copy
+import networkx as nx
 
-
-NODES_MERGED_THRESHOLD = 200
+NODES_MERGED_THRESHOLD = 100
 EDR_THRESHOLD = 0.1
 
 
+
+
+# Defining a Class
+class GraphVisualization:
+
+    def __init__(self):
+        # visual is a list which stores all
+        # the set of edges that constitutes a
+        # graph
+        self.visual = []
+
+    # addEdge function inputs the vertices of an
+    # edge and appends it to the visual list
+    def addEdge(self, a, b):
+        temp = [a, b]
+        self.visual.append(temp)
+
+    # In visualize function G is an object of
+    # class Graph given by networkx G.add_edges_from(visual)
+    # creates a graph with a given list
+    # nx.draw_networkx(G) - plots the graph
+    # plt.show() - displays the graph
+    def visualize(self):
+        G = nx.Graph()
+        G.add_edges_from(self.visual)
+        nx.draw_networkx(G)
+        plt.show()
+
+# Driver code
 
 def minhash(set_a, set_b, hashes, seed):
     hashedset = []
@@ -263,7 +292,7 @@ def upa(n, m):
         for new_node in range(m, n):
             # Find <=m nodes to attach to new_node
             totdeg = float(total_degree(g))
-            nodes = g.keys()
+            nodes = list(g.keys())
             probs = []
             for node in nodes:
                 probs.append(len(g[node]) / totdeg)
@@ -329,6 +358,7 @@ def distinct_multinomial(ntrials, probs):
     return r
 
 
+
 def random_graph_generator(n):
     rg = defaultdict(lambda: defaultdict(int))
     for i in range(n):
@@ -345,6 +375,7 @@ def random_graph_generator(n):
     for i in rg.keys():
         rg[i] = dict(rg[i])
     return dict(rg)
+
 
 
 g1 = erdos_renyi(20, 0.14)
@@ -366,12 +397,40 @@ r = 2 ** 12
 #         print(g1)
 
 # timeE1 = time.time()
-g3 = erdos_renyi(1000, 0.001)
+print("VISUALIZING A GRAPH")
+g9 = erdos_renyi(15, 0.15)
+hg9, hf9 = hash_graph(k, l, r, g9)
+V = GraphVisualization()
+for node in g9.keys():
+    for nbr in g9[node].keys():
+        V.addEdge(node, nbr)
+V.visualize()
+nm9 = 0
+g9_merges = []
+for i in range(len(g9)):
+    if i in g9.keys():
+        g9_candidates = g9_candidates = get_candidates(g9, k, l, r, hg9, i, hf9)
+        nm9 += create_supernode(g9, i, EDR_THRESHOLD, g9_candidates, g9_merges)
+    if nm9 > 5:
+        break
+V1 = GraphVisualization()
+for node in g9.keys():
+    for nbr in g9[node].keys():
+        V1.addEdge(node, nbr)
+V1.visualize()
+
+### ERDOS RENYI TEST
+print("ERDOS REYNI")
+g3 = erdos_renyi(10000, 0.001)
 #print(g3)
 # timeE2 = time.time()
 # print(str(timeE2 - timeE1))
+
+###FOR NON-LSH ALGORITHM
 g4 = copy.deepcopy(g3)
+###ORIGINAL UNMERGED GRAPH
 g5 = copy.deepcopy(g3)
+
 time1 = time.time()
 hg3, hf3 = hash_graph(k, l, r, g3)
 nodes_merged = 0
@@ -392,12 +451,45 @@ for i in range(len(g4)):
     if i in g4.keys():
         g4_candidates = list(g4.keys())
         nm += create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
-    if nm > NODES_MERGED_THRESHOLD:
+    if nm > nodes_merged:
         break
 print("Nodes Merged without LSH: " + str(nm))
 time4 = time.time()
 print("Time for merging nodes without LSH: " + str(time4 - time3))
 print("Closeness of Merged Sets, with LSH: " + str(dist(g5, g3, g3_merges)))
 print("Closeness of Merged Sets, without LSH: " + str(dist(g5, g4, g4_merges)))
+print("")
+print("")
+print("UPA TEST")
 
+g6 = upa(10000, 100)
+g7 = copy.deepcopy(g6)
+g8 = copy.deepcopy(g6)
+time1 = time.time()
+hg6, hf6 = hash_graph(k, l, r, g6)
+nodes_merged = 0
+g6_merges = []
+for i in range(len(g6)):
+    if i in g6.keys():
+        g6_candidates = get_candidates(g6, k, l, r, hg6, i, hf6)
+        nodes_merged += create_supernode(g6, i, EDR_THRESHOLD, g6_candidates, g6_merges)
+    if nodes_merged > NODES_MERGED_THRESHOLD:
+        break
+print("Nodes Merged with LSH: " + str(nodes_merged))
+time2 = time.time()
+print("Time for merging nodes with LSH: " + str(time2 - time1))
+time3 = time.time()
+nm = 0
+g7_merges = []
+for i in range(len(g7)):
+    if i in g7.keys():
+        g7_candidates = list(g7.keys())
+        nm += create_supernode(g7, i, EDR_THRESHOLD, g7_candidates, g7_merges)
+    if nm > nodes_merged:
+        break
+print("Nodes Merged without LSH: " + str(nm))
+time4 = time.time()
+print("Time for merging nodes without LSH: " + str(time4 - time3))
+print("Closeness of Merged Sets, with LSH: " + str(dist(g8, g6, g6_merges)))
+print("Closeness of Merged Sets, without LSH: " + str(dist(g8, g7, g7_merges)))
 
