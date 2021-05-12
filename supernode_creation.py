@@ -270,8 +270,8 @@ def upa(n, m):
             mult = distinct_multinomial(m, probs)
 
             # Add new_node and its random neighbors
-            g[new_node] = set()
-            for idx in mult:
+            g[new_node] = {}
+            for idx in mult.keys():
                 node = nodes[idx]
                 g[new_node][node] = 1
                 g[node][new_node] = 1
@@ -319,11 +319,14 @@ def distinct_multinomial(ntrials, probs):
     only appear once in the result.
     """
     ### select ntrials elements randomly
-    mult = numpy.random.multinomial(ntrials, probs)
+    mult = np.random.multinomial(ntrials, probs)
 
     ### turn the results into a list of indices without duplicates
     result = [i for i, v in enumerate(mult) if v > 0]
-    return result
+    r = {}
+    for i in result:
+        r[i] = 1
+    return r
 
 
 g1 = erdos_renyi(20, 0.14)
