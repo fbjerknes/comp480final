@@ -329,6 +329,24 @@ def distinct_multinomial(ntrials, probs):
     return r
 
 
+def random_graph_generator(n):
+    rg = defaultdict(lambda: defaultdict(int))
+    for i in range(n):
+        for j in range(i):
+            ran = random.random()
+            if int(i//10) == int(j//10):
+                if ran < 0.9:
+                    rg[i][j] = 1
+                    rg[j][i] = 1
+            else:
+                if ran < 0.001:
+                    rg[i][j] = 1
+                    rg[j][i] = 1
+    for i in rg.keys():
+        rg[i] = dict(rg[i])
+    return dict(rg)
+
+
 g1 = erdos_renyi(20, 0.14)
 #print(g1)
 g2 = {0: {2: 3, 3: 4, 4: 1}, 1: {2: 2, 3: 7, 4: 1, 5: 4}, 2: {0: 3, 1 : 2}, 3: {0: 4, 1 : 7}, 4: {0: 1, 1 : 1}, 5: {1 : 4}}
