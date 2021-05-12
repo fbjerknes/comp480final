@@ -39,11 +39,12 @@ class GraphVisualization:
     # creates a graph with a given list
     # nx.draw_networkx(G) - plots the graph
     # plt.show() - displays the graph
-    def visualize(self):
+    def visualize(self, n):
         G = nx.Graph()
         G.add_edges_from(self.visual)
+        plt.figure(n)
         nx.draw_networkx(G)
-        plt.show()
+        plt.show(block=False)
 
 # Driver code
 
@@ -386,21 +387,21 @@ V = GraphVisualization()
 for node in g9.keys():
     for nbr in g9[node].keys():
         V.addEdge(node, nbr)
-V.visualize()
+V.visualize(0)
 nm9 = 0
 g9_merges = []
 for i in range(len(g9)):
     if i in g9.keys():
         g9_candidates = g9_candidates = get_candidates(g9, k, l, r, hg9, i, hf9)
         nm9 += create_supernode(g9, i, EDR_THRESHOLD, g9_candidates, g9_merges)
-    if nm9 > 5:
+    if nm9 > 3:
         break
 V1 = GraphVisualization()
 for node in g9.keys():
     for nbr in g9[node].keys():
         V1.addEdge(node, nbr)
-V1.visualize()
-
+V1.visualize(1)
+plt.show()
 ### ERDOS RENYI TEST
 print("ERDOS REYNI")
 g3 = erdos_renyi(10000, 0.001)
