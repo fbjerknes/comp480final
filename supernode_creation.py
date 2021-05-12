@@ -345,12 +345,18 @@ r = 2 ** 12
 #         print(g1)
 
 # timeE1 = time.time()
+### ERDOS RENYI TEST
+print("ERDOS REYNI")
 g3 = erdos_renyi(1000, 0.001)
 #print(g3)
 # timeE2 = time.time()
 # print(str(timeE2 - timeE1))
+
+###FOR NON-LSH ALGORITHM
 g4 = copy.deepcopy(g3)
+###ORIGINAL UNMERGED GRAPH
 g5 = copy.deepcopy(g3)
+
 time1 = time.time()
 hg3, hf3 = hash_graph(k, l, r, g3)
 nodes_merged = 0
@@ -378,5 +384,38 @@ time4 = time.time()
 print("Time for merging nodes without LSH: " + str(time4 - time3))
 print("Closeness of Merged Sets, with LSH: " + str(dist(g5, g3, g3_merges)))
 print("Closeness of Merged Sets, without LSH: " + str(dist(g5, g4, g4_merges)))
+print("")
+print("")
+print("UPA TEST")
 
+g6 = upa(10000, 10)
+g7 = copy.deepcopy(g6)
+g8 = copy.deepcopy(g6)
+time1 = time.time()
+hg6, hf6 = hash_graph(k, l, r, g3)
+nodes_merged = 0
+g6_merges = []
+for i in range(len(g6)):
+    if i in g6.keys():
+        g6_candidates = get_candidates(g6, k, l, r, hg6, i, hf6)
+        nodes_merged += create_supernode(g6, i, EDR_THRESHOLD, g6_candidates, g6_merges)
+    if nodes_merged > NODES_MERGED_THRESHOLD:
+        break
+print("Nodes Merged with LSH: " + str(nodes_merged))
+time2 = time.time()
+print("Time for merging nodes with LSH: " + str(time2 - time1))
+time3 = time.time()
+nm = 0
+g7_merges = []
+for i in range(len(g7)):
+    if i in g7.keys():
+        g7_candidates = list(g7.keys())
+        nm += create_supernode(g7, i, EDR_THRESHOLD, g7_candidates, g7_merges)
+    if nm > NODES_MERGED_THRESHOLD:
+        break
+print("Nodes Merged without LSH: " + str(nm))
+time4 = time.time()
+print("Time for merging nodes without LSH: " + str(time4 - time3))
+print("Closeness of Merged Sets, with LSH: " + str(dist(g8, g6, g6_merges)))
+print("Closeness of Merged Sets, without LSH: " + str(dist(g8, g7, g7_merges)))
 
