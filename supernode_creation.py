@@ -15,6 +15,7 @@ import networkx as nx
 
 NODES_MERGED_THRESHOLD = 100
 EDR_THRESHOLD = 0.1
+TIME_SERIES_NODES_MERGED_THRESHOLD = 30
 
 
 
@@ -420,77 +421,261 @@ for node in g9.keys():
         V1.addEdge(node, nbr)
 V1.visualize(1)
 plt.show()
-### ERDOS RENYI TEST
-print("ERDOS REYNI")
-g3 = erdos_renyi(10000, 0.001)
-#print(g3)
-# timeE2 = time.time()
-# print(str(timeE2 - timeE1))
 
-###FOR NON-LSH ALGORITHM
-g4 = copy.deepcopy(g3)
-###ORIGINAL UNMERGED GRAPH
-g5 = copy.deepcopy(g3)
+def run_tests():
+    ### ERDOS RENYI TEST
+    print("ERDOS REYNI")
+    g3 = erdos_renyi(10000, 0.001)
 
-time1 = time.time()
-hg3, hf3 = hash_graph(k, l, r, g3)
-nodes_merged = 0
-g3_merges = []
-for i in range(len(g3)):
-    if i in g3.keys():
-        g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
-        nodes_merged += create_supernode(g3, i, EDR_THRESHOLD, g3_candidates, g3_merges)
-    if nodes_merged > NODES_MERGED_THRESHOLD:
-        break
-print("Nodes Merged with LSH: " + str(nodes_merged))
-time2 = time.time()
-print("Time for merging nodes with LSH: " + str(time2 - time1))
-time3 = time.time()
-nm = 0
-g4_merges = []
-for i in range(len(g4)):
-    if i in g4.keys():
-        g4_candidates = list(g4.keys())
-        nm += create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
-    if nm > nodes_merged:
-        break
-print("Nodes Merged without LSH: " + str(nm))
-time4 = time.time()
-print("Time for merging nodes without LSH: " + str(time4 - time3))
-print("Closeness of Merged Sets, with LSH: " + str(dist(g5, g3, g3_merges)))
-print("Closeness of Merged Sets, without LSH: " + str(dist(g5, g4, g4_merges)))
-print("")
-print("")
-print("UPA TEST")
+    #print(g3)
+    # timeE2 = time.time()
+    # print(str(timeE2 - timeE1))
 
-g6 = upa(10000, 100)
-g7 = copy.deepcopy(g6)
-g8 = copy.deepcopy(g6)
-time1 = time.time()
-hg6, hf6 = hash_graph(k, l, r, g6)
-nodes_merged = 0
-g6_merges = []
-for i in range(len(g6)):
-    if i in g6.keys():
-        g6_candidates = get_candidates(g6, k, l, r, hg6, i, hf6)
-        nodes_merged += create_supernode(g6, i, EDR_THRESHOLD, g6_candidates, g6_merges)
-    if nodes_merged > NODES_MERGED_THRESHOLD:
-        break
-print("Nodes Merged with LSH: " + str(nodes_merged))
-time2 = time.time()
-print("Time for merging nodes with LSH: " + str(time2 - time1))
-time3 = time.time()
-nm = 0
-g7_merges = []
-for i in range(len(g7)):
-    if i in g7.keys():
-        g7_candidates = list(g7.keys())
-        nm += create_supernode(g7, i, EDR_THRESHOLD, g7_candidates, g7_merges)
-    if nm > nodes_merged:
-        break
-print("Nodes Merged without LSH: " + str(nm))
-time4 = time.time()
-print("Time for merging nodes without LSH: " + str(time4 - time3))
-print("Closeness of Merged Sets, with LSH: " + str(dist(g8, g6, g6_merges)))
-print("Closeness of Merged Sets, without LSH: " + str(dist(g8, g7, g7_merges)))
+    ###FOR NON-LSH ALGORITHM
+    g4 = copy.deepcopy(g3)
+    ###ORIGINAL UNMERGED GRAPH
+    g5 = copy.deepcopy(g3)
 
+    time1 = time.time()
+    hg3, hf3 = hash_graph(k, l, r, g3)
+    nodes_merged = 0
+    g3_merges = []
+
+    for i in range(len(g3)):
+        if i in g3.keys():
+            g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
+            nodes_merged += create_supernode(g3, i, EDR_THRESHOLD, g3_candidates, g3_merges)
+        if nodes_merged > NODES_MERGED_THRESHOLD:
+            break
+
+
+    print("Nodes Merged with LSH: " + str(nodes_merged))
+    time2 = time.time()
+    print("Time for merging nodes with LSH: " + str(time2 - time1))
+    time3 = time.time()
+
+
+    nm = 0
+    g4_merges = []
+
+    for i in range(len(g4)):
+        if i in g4.keys():
+            g4_candidates = list(g4.keys())
+            nm += create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
+        if nm > nodes_merged:
+            break
+
+
+    print("Nodes Merged without LSH: " + str(nm))
+    time4 = time.time()
+    print("Time for merging nodes without LSH: " + str(time4 - time3))
+    print("Closeness of Merged Sets, with LSH: " + str(dist(g5, g3, g3_merges)))
+    print("Closeness of Merged Sets, without LSH: " + str(dist(g5, g4, g4_merges)))
+    print("")
+    print("")
+
+
+    print("UPA TEST")
+
+    g6 = upa(10000, 100)
+    g7 = copy.deepcopy(g6)
+    g8 = copy.deepcopy(g6)
+    time1 = time.time()
+    hg6, hf6 = hash_graph(k, l, r, g6)
+    nodes_merged = 0
+    g6_merges = []
+
+
+    for i in range(len(g6)):
+        if i in g6.keys():
+            g6_candidates = get_candidates(g6, k, l, r, hg6, i, hf6)
+            nodes_merged += create_supernode(g6, i, EDR_THRESHOLD, g6_candidates, g6_merges)
+        if nodes_merged > NODES_MERGED_THRESHOLD:
+            break
+
+
+    print("Nodes Merged with LSH: " + str(nodes_merged))
+    time2 = time.time()
+    print("Time for merging nodes with LSH: " + str(time2 - time1))
+    time3 = time.time()
+    nm = 0
+
+    g7_merges = []
+    for i in range(len(g7)):
+        if i in g7.keys():
+            g7_candidates = list(g7.keys())
+            nm += create_supernode(g7, i, EDR_THRESHOLD, g7_candidates, g7_merges)
+        if nm > nodes_merged:
+            break
+
+
+    print("Nodes Merged without LSH: " + str(nm))
+    time4 = time.time()
+    print("Time for merging nodes without LSH: " + str(time4 - time3))
+    print("Closeness of Merged Sets, with LSH: " + str(dist(g8, g6, g6_merges)))
+    print("Closeness of Merged Sets, without LSH: " + str(dist(g8, g7, g7_merges)))
+
+
+def produce_time_series():
+    g3 = erdos_renyi(10000, 0.001)
+
+    # print(g3)
+    # timeE2 = time.time()
+    # print(str(timeE2 - timeE1))
+
+    ###FOR NON-LSH ALGORITHM
+    g4 = copy.deepcopy(g3)
+    ###ORIGINAL UNMERGED GRAPH
+    g5 = copy.deepcopy(g3)
+
+    hg3, hf3 = hash_graph(k, l, r, g3)
+    nodes_merged = 0
+    g3_merges = []
+
+    er_simi = []
+
+    for i in range(len(g3)):
+        if i in g3.keys():
+            g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
+            c = create_supernode(g3, i, EDR_THRESHOLD, g3_candidates, g3_merges)
+            nodes_merged += c
+            for j in range(c):
+                er_simi.append(dist(g5, g3, g3_merges))
+        if nodes_merged > TIME_SERIES_NODES_MERGED_THRESHOLD:
+            break
+
+    nm = 0
+    g4_merges = []
+    bf_simi = []
+
+    for i in range(len(g4)):
+        if i in g4.keys():
+            g4_candidates = list(g4.keys())
+            d = create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
+            nm += d
+            for j in range(d):
+                bf_simi.append(dist(g5, g4, g4_merges))
+        if nm > nodes_merged:
+            break
+
+    return {'Nodes Removed': range(nodes_merged), 'With LSH': er_simi, 'Without LSH': bf_simi}
+
+
+def produce_plot_data():
+    er_data = [[[], [], []], [[], [], []]]
+
+    g3 = erdos_renyi(10000, 0.001)
+
+
+    ###FOR NON-LSH ALGORITHM
+    g4 = copy.deepcopy(g3)
+    ###ORIGINAL UNMERGED GRAPH
+    g5 = copy.deepcopy(g3)
+
+    time1 = time.time()
+    hg3, hf3 = hash_graph(k, l, r, g3)
+    nodes_merged = 0
+    g3_merges = []
+
+    for i in range(len(g3)):
+        if i in g3.keys():
+            g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
+            nodes_merged += create_supernode(g3, i, EDR_THRESHOLD, g3_candidates, g3_merges)
+        if nodes_merged > NODES_MERGED_THRESHOLD:
+            break
+
+    er_data[0][0].append(nodes_merged)
+    time2 = time.time()
+    er_data[0][1].append(time2 - time1)
+    time3 = time.time()
+
+    nm = 0
+    g4_merges = []
+
+    for i in range(len(g4)):
+        if i in g4.keys():
+            g4_candidates = list(g4.keys())
+            nm += create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
+        if nm > nodes_merged:
+            break
+
+    er_data[1][0].append(nm)
+    time4 = time.time()
+    er_data[1][1].append(time4 - time3)
+    er_data[0][2].append(dist(g5, g3, g3_merges))
+    er_data[1][2].append(dist(g5, g4, g4_merges))
+
+
+    upa_data = [[[], [], []], [[], [], []]]
+
+    g6 = upa(10000, 100)
+    g7 = copy.deepcopy(g6)
+    g8 = copy.deepcopy(g6)
+    time1 = time.time()
+    hg6, hf6 = hash_graph(k, l, r, g6)
+    nodes_merged = 0
+    g6_merges = []
+
+    for i in range(len(g6)):
+        if i in g6.keys():
+            g6_candidates = get_candidates(g6, k, l, r, hg6, i, hf6)
+            nodes_merged += create_supernode(g6, i, EDR_THRESHOLD, g6_candidates, g6_merges)
+        if nodes_merged > NODES_MERGED_THRESHOLD:
+            break
+
+    upa_data[0][0].append(nodes_merged)
+    time2 = time.time()
+    upa_data[0][1].append(time2 - time1)
+    time3 = time.time()
+    nm = 0
+
+    g7_merges = []
+    for i in range(len(g7)):
+        if i in g7.keys():
+            g7_candidates = list(g7.keys())
+            nm += create_supernode(g7, i, EDR_THRESHOLD, g7_candidates, g7_merges)
+        if nm > nodes_merged:
+            break
+
+    upa_data[1][0].append(nm)
+    time4 = time.time()
+    upa_data[1][1].append(time4 - time3)
+    upa_data[0][2].append(dist(g8, g6, g6_merges))
+    upa_data[1][2].append(dist(g8, g7, g7_merges))
+
+    rand_data = [[[], [], []], [[], [], []]]
+
+    g9 = upa(10000, 100)
+    g10 = copy.deepcopy(g9)
+    g11 = copy.deepcopy(g9)
+    time1 = time.time()
+    hg9, hf9 = hash_graph(k, l, r, g9)
+    nodes_merged = 0
+    g9_merges = []
+
+    for i in range(len(g9)):
+        if i in g9.keys():
+            g9_candidates = get_candidates(g9, k, l, r, hg9, i, hf9)
+            nodes_merged += create_supernode(g9, i, EDR_THRESHOLD, g9_candidates, g9_merges)
+        if nodes_merged > NODES_MERGED_THRESHOLD:
+            break
+
+    rand_data[0][0].append(nodes_merged)
+    time2 = time.time()
+    rand_data[0][1].append(time2 - time1)
+    time3 = time.time()
+    nm = 0
+
+    g10_merges = []
+    for i in range(len(g10)):
+        if i in g10.keys():
+            g10_candidates = list(g10.keys())
+            nm += create_supernode(g10, i, EDR_THRESHOLD, g10_candidates, g10_merges)
+        if nm > nodes_merged:
+            break
+
+    rand_data[1][0].append(nm)
+    time4 = time.time()
+    rand_data[1][1].append(time4 - time3)
+    rand_data[0][2].append(dist(g11, g9, g9_merges))
+    rand_data[1][2].append(dist(g11, g10, g10_merges))
