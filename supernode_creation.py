@@ -15,6 +15,7 @@ import networkx as nx
 
 NODES_MERGED_THRESHOLD = 100
 EDR_THRESHOLD = 0.1
+graph_num = 0
 
 
 
@@ -181,11 +182,13 @@ def hash_graph(k, l, r, graph):
 
 def get_candidates(graph, k, l, r, hashed_graph, query_node, hash_funcs):
     query_codes = generate_hashcodes(graph[query_node].keys(), k, l, hash_funcs)
+    candidates = hashed_graph.lookup(query_codes)
     return hashed_graph.lookup(query_codes)
 
 
 def create_supernode(graph, query_node, edr_threshold, list_of_candidates, cur_nodes_merged):
     nodes_merged = 0
+    vis = len(graph.keys()) < 20
     if query_node not in graph or not graph[query_node]:
         return 0
     for node in list_of_candidates:
@@ -197,8 +200,11 @@ def create_supernode(graph, query_node, edr_threshold, list_of_candidates, cur_n
             potential_compression = query_neighbors | other_neighbors
             nssize = len(potential_compression.keys())
             edr = (nqsize + nvsize - nssize) / (nqsize + nvsize)
+            sizedif = nqsize / nssize
+            if (sizedif < 1 and sizedif != 0):
+                sizedif = 1/sizedif
             # print(edr)
-            if (edr > edr_threshold):
+            if (edr > edr_threshold and sizedif < 6):
                 nodes_merged += 1
                 for nbr in graph[node].keys():
                     if nbr == node:
@@ -230,6 +236,8 @@ def create_supernode(graph, query_node, edr_threshold, list_of_candidates, cur_n
                         cur_nodes_merged[querylist].append(node)
                 else:
                     cur_nodes_merged[nodelist].insert(0, query_node)
+                if vis:
+                    make_visual(graph)
     return nodes_merged
 
 def erdos_renyi(n, p):
@@ -397,6 +405,15 @@ r = 2 ** 12
 #         create_supernode(g1, i, 0.05, g_candidates, g1merges)
 #         print(g1)
 
+def make_visual(graph):
+    global graph_num
+    V = GraphVisualization()
+    for node in graph.keys():
+        for nbr in g9[node].keys():
+            V.addEdge(node, nbr)
+    V.visualize(graph_num)
+    graph_num += 1
+
 # timeE1 = time.time()
 print("VISUALIZING A GRAPH")
 g9 = erdos_renyi(15, 0.15)
@@ -405,7 +422,7 @@ V = GraphVisualization()
 for node in g9.keys():
     for nbr in g9[node].keys():
         V.addEdge(node, nbr)
-V.visualize(0)
+
 nm9 = 0
 g9_merges = []
 for i in range(len(g9)):
@@ -414,11 +431,9 @@ for i in range(len(g9)):
         nm9 += create_supernode(g9, i, EDR_THRESHOLD, g9_candidates, g9_merges)
     if nm9 > 3:
         break
-V1 = GraphVisualization()
-for node in g9.keys():
-    for nbr in g9[node].keys():
-        V1.addEdge(node, nbr)
-V1.visualize(1)
+
+
+
 plt.show()
 ### ERDOS RENYI TEST
 print("ERDOS REYNI")
