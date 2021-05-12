@@ -18,6 +18,8 @@ EDR_THRESHOLD = 0.1
 
 TIME_SERIES_NODES_MERGED_THRESHOLD = 30
 
+NUM_DATA_POINTS = 30
+
 graph_num = 0
 
 
@@ -578,47 +580,57 @@ def produce_time_series():
 
 def produce_plot_data():
     er_data = [[[], [], []], [[], [], []]]
+    for a in range(NUM_DATA_POINTS):
+        g3 = erdos_renyi(10000, 0.001)
 
-    g3 = erdos_renyi(10000, 0.001)
 
+        ###FOR NON-LSH ALGORITHM
+        g4 = copy.deepcopy(g3)
+        ###ORIGINAL UNMERGED GRAPH
+        g5 = copy.deepcopy(g3)
 
-    ###FOR NON-LSH ALGORITHM
-    g4 = copy.deepcopy(g3)
-    ###ORIGINAL UNMERGED GRAPH
-    g5 = copy.deepcopy(g3)
+        time1 = time.time()
+        hg3, hf3 = hash_graph(k, l, r, g3)
+        nodes_merged = 0
+        g3_merges = []
 
-    time1 = time.time()
-    hg3, hf3 = hash_graph(k, l, r, g3)
-    nodes_merged = 0
-    g3_merges = []
+        for i in range(len(g3)):
+            if i in g3.keys():
+                g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
+                nodes_merged += create_supernode(g3, i, EDR_THRESHOLD, g3_candidates, g3_merges)
+            if nodes_merged > NODES_MERGED_THRESHOLD:
+                break
 
-    for i in range(len(g3)):
-        if i in g3.keys():
-            g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
-            nodes_merged += create_supernode(g3, i, EDR_THRESHOLD, g3_candidates, g3_merges)
-        if nodes_merged > NODES_MERGED_THRESHOLD:
-            break
+        er_data[0][0].append(nodes_merged)
+        time2 = time.time()
+        er_data[0][1].append(time2 - time1)
+        time3 = time.time()
 
-    er_data[0][0].append(nodes_merged)
-    time2 = time.time()
-    er_data[0][1].append(time2 - time1)
-    time3 = time.time()
+        nm = 0
+        g4_merges = []
 
-    nm = 0
-    g4_merges = []
+        for i in range(len(g4)):
+            if i in g4.keys():
+                g4_candidates = list(g4.keys())
+                nm += create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
+            if nm > nodes_merged:
+                break
 
-    for i in range(len(g4)):
-        if i in g4.keys():
-            g4_candidates = list(g4.keys())
-            nm += create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
-        if nm > nodes_merged:
-            break
+        er_data[1][0].append(nm)
+        time4 = time.time()
+        er_data[1][1].append(time4 - time3)
+        er_data[0][2].append(dist(g5, g3, g3_merges))
+        er_data[1][2].append(dist(g5, g4, g4_merges))
 
-    er_data[1][0].append(nm)
-    time4 = time.time()
-    er_data[1][1].append(time4 - time3)
-    er_data[0][2].append(dist(g5, g3, g3_merges))
-    er_data[1][2].append(dist(g5, g4, g4_merges))
+    time_dif = []
+    sim_dif = []
+    for i in range(len(er_data[0][1])):
+        time_dif.append(float(er_data[1][1][i]) / er_data[0][1][i])
+        sim_dif.append(float(er_data[0][2][i]) / er_data[1][2][i])
+
+    er_plot_time = {'Without LSH': er_data[1][1], 'With LSH': er_data[0][1]}
+    er_plot_similarity = {'Without LSH': er_data[1][2], 'With LSH': er_data[0][2]}
+    er_plot_differences = {'Time Difference': time_dif, 'Accuracy Difference': sim_dif}
 
 
     upa_data = [[[], [], []], [[], [], []]]
@@ -658,6 +670,17 @@ def produce_plot_data():
     upa_data[0][2].append(dist(g8, g6, g6_merges))
     upa_data[1][2].append(dist(g8, g7, g7_merges))
 
+    time_dif = []
+    sim_dif = []
+    for i in range(len(upa_data[0][1])):
+        time_dif.append(float(upa_data[1][1][i]) / upa_data[0][1][i])
+        sim_dif.append(float(upa_data[0][2][i]) / upa_data[1][2][i])
+
+    upa_plot_time = {'Without LSH': upa_data[1][1], 'With LSH': upa_data[0][1]}
+    upa_plot_similarity = {'Without LSH': upa_data[1][2], 'With LSH': upa_data[0][2]}
+    upa_plot_differences = {'Time Difference': time_dif, 'Accuracy Difference': sim_dif}
+
+
     rand_data = [[[], [], []], [[], [], []]]
 
     g9 = upa(10000, 100)
@@ -694,3 +717,34 @@ def produce_plot_data():
     rand_data[1][1].append(time4 - time3)
     rand_data[0][2].append(dist(g11, g9, g9_merges))
     rand_data[1][2].append(dist(g11, g10, g10_merges))
+
+    time_dif = []
+    sim_dif = []
+    for i in range(len(rand_data[0][1])):
+        time_dif.append(float(rand_data[1][1][i]) / rand_data[0][1][i])
+        sim_dif.append(float(rand_data[0][2][i]) / rand_data[1][2][i])
+
+    rand_plot_time = {'Without LSH': rand_data[1][1], 'With LSH': rand_data[0][1]}
+    rand_plot_similarity = {'Without LSH': rand_data[1][2], 'With LSH': rand_data[0][2]}
+    rand_plot_differences = {'Time Difference': time_dif, 'Accuracy Difference': sim_dif}
+
+    return er_plot_time, er_plot_similarity, er_plot_differences, upa_plot_time, upa_plot_similarity, upa_plot_differences, rand_plot_time, rand_plot_similarity, rand_plot_differences
+
+
+series = produce_time_series()
+data = produce_plot_data()
+
+actual = [pd.DataFrame(data=series)]
+
+for i in data:
+    actual.append(pd.DataFrame(data=i))
+
+for i in range(10):
+    if i == 0:
+        actual[i].plot(x='Nodes Removed')
+    elif i % 3 == 0:
+        actual[i].plot(x='Time Difference')
+    else:
+        actual[i].plot(x='Without LSH')
+
+plt.show()
