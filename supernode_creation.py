@@ -11,12 +11,41 @@ from collections import defaultdict
 from sklearn.utils import murmurhash3_32
 import time
 import copy
+import networkx as nx
 
-
-NODES_MERGED_THRESHOLD = 200
+NODES_MERGED_THRESHOLD = 100
 EDR_THRESHOLD = 0.1
 
 
+
+
+# Defining a Class
+class GraphVisualization:
+
+    def __init__(self):
+        # visual is a list which stores all
+        # the set of edges that constitutes a
+        # graph
+        self.visual = []
+
+    # addEdge function inputs the vertices of an
+    # edge and appends it to the visual list
+    def addEdge(self, a, b):
+        temp = [a, b]
+        self.visual.append(temp)
+
+    # In visualize function G is an object of
+    # class Graph given by networkx G.add_edges_from(visual)
+    # creates a graph with a given list
+    # nx.draw_networkx(G) - plots the graph
+    # plt.show() - displays the graph
+    def visualize(self):
+        G = nx.Graph()
+        G.add_edges_from(self.visual)
+        nx.draw_networkx(G)
+        plt.show()
+
+# Driver code
 
 def minhash(set_a, set_b, hashes, seed):
     hashedset = []
@@ -263,7 +292,7 @@ def upa(n, m):
         for new_node in range(m, n):
             # Find <=m nodes to attach to new_node
             totdeg = float(total_degree(g))
-            nodes = g.keys()
+            nodes = list(g.keys())
             probs = []
             for node in nodes:
                 probs.append(len(g[node]) / totdeg)
@@ -329,6 +358,8 @@ def distinct_multinomial(ntrials, probs):
     return r
 
 
+
+
 g1 = erdos_renyi(20, 0.14)
 #print(g1)
 g2 = {0: {2: 3, 3: 4, 4: 1}, 1: {2: 2, 3: 7, 4: 1, 5: 4}, 2: {0: 3, 1 : 2}, 3: {0: 4, 1 : 7}, 4: {0: 1, 1 : 1}, 5: {1 : 4}}
@@ -348,9 +379,31 @@ r = 2 ** 12
 #         print(g1)
 
 # timeE1 = time.time()
+print("VISUALIZING A GRAPH")
+g9 = erdos_renyi(15, 0.15)
+hg9, hf9 = hash_graph(k, l, r, g9)
+V = GraphVisualization()
+for node in g9.keys():
+    for nbr in g9[node].keys():
+        V.addEdge(node, nbr)
+V.visualize()
+nm9 = 0
+g9_merges = []
+for i in range(len(g9)):
+    if i in g9.keys():
+        g9_candidates = g9_candidates = get_candidates(g9, k, l, r, hg9, i, hf9)
+        nm9 += create_supernode(g9, i, EDR_THRESHOLD, g9_candidates, g9_merges)
+    if nm9 > 5:
+        break
+V1 = GraphVisualization()
+for node in g9.keys():
+    for nbr in g9[node].keys():
+        V1.addEdge(node, nbr)
+V1.visualize()
+
 ### ERDOS RENYI TEST
 print("ERDOS REYNI")
-g3 = erdos_renyi(1000, 0.001)
+g3 = erdos_renyi(10000, 0.001)
 #print(g3)
 # timeE2 = time.time()
 # print(str(timeE2 - timeE1))
@@ -380,7 +433,7 @@ for i in range(len(g4)):
     if i in g4.keys():
         g4_candidates = list(g4.keys())
         nm += create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
-    if nm > NODES_MERGED_THRESHOLD:
+    if nm > nodes_merged:
         break
 print("Nodes Merged without LSH: " + str(nm))
 time4 = time.time()
@@ -391,11 +444,11 @@ print("")
 print("")
 print("UPA TEST")
 
-g6 = upa(10000, 10)
+g6 = upa(10000, 100)
 g7 = copy.deepcopy(g6)
 g8 = copy.deepcopy(g6)
 time1 = time.time()
-hg6, hf6 = hash_graph(k, l, r, g3)
+hg6, hf6 = hash_graph(k, l, r, g6)
 nodes_merged = 0
 g6_merges = []
 for i in range(len(g6)):
@@ -414,7 +467,7 @@ for i in range(len(g7)):
     if i in g7.keys():
         g7_candidates = list(g7.keys())
         nm += create_supernode(g7, i, EDR_THRESHOLD, g7_candidates, g7_merges)
-    if nm > NODES_MERGED_THRESHOLD:
+    if nm > nodes_merged:
         break
 print("Nodes Merged without LSH: " + str(nm))
 time4 = time.time()
