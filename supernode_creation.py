@@ -319,7 +319,7 @@ def distinct_multinomial(ntrials, probs):
     only appear once in the result.
     """
     ### select ntrials elements randomly
-    mult = numpy.random.multinomial(ntrials, probs)
+    mult = np.random.multinomial(ntrials, probs)
 
     ### turn the results into a list of indices without duplicates
     result = [i for i, v in enumerate(mult) if v > 0]
