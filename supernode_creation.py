@@ -14,7 +14,7 @@ import copy
 
 
 NODES_MERGED_THRESHOLD = 200
-EDR_THRESHOLD = 0.075
+EDR_THRESHOLD = 0.1
 
 
 
@@ -200,7 +200,6 @@ def create_supernode(graph, query_node, edr_threshold, list_of_candidates, cur_n
                         cur_nodes_merged[querylist].append(node)
                 else:
                     cur_nodes_merged[nodelist].insert(0, query_node)
-                    print("here "+str(query_node))
     return nodes_merged
 
 def erdos_renyi(n, p):
@@ -279,11 +278,11 @@ r = 2 ** 12
 #         create_supernode(g1, i, 0.05, g_candidates, g1merges)
 #         print(g1)
 
-timeE1 = time.time()
+# timeE1 = time.time()
 g3 = erdos_renyi(1000, 0.001)
 #print(g3)
-timeE2 = time.time()
-print(str(timeE2 - timeE1))
+# timeE2 = time.time()
+# print(str(timeE2 - timeE1))
 g4 = copy.deepcopy(g3)
 g5 = copy.deepcopy(g3)
 time1 = time.time()
@@ -298,7 +297,7 @@ for i in range(len(g3)):
         break
 print("Nodes Merged with LSH: " + str(nodes_merged))
 time2 = time.time()
-print(str(time2 - time1))
+print("Time for merging nodes with LSH: " + str(time2 - time1))
 time3 = time.time()
 nm = 0
 g4_merges = []
@@ -307,15 +306,10 @@ for i in range(len(g4)):
         g4_candidates = list(g4.keys())
         nm += create_supernode(g4, i, EDR_THRESHOLD, g4_candidates, g4_merges)
     if nm > NODES_MERGED_THRESHOLD:
-        print(nm)
         break
 print("Nodes Merged without LSH: " + str(nm))
 time4 = time.time()
-print(str(time4 - time3))
-print("g3: ")
-print(g3_merges)
-print("g4: ")
-print(g4_merges)
+print("Time for merging nodes without LSH: " + str(time4 - time3))
 print("Closeness of Merged Sets, with LSH: " + str(dist(g5, g3, g3_merges)))
 print("Closeness of Merged Sets, without LSH: " + str(dist(g5, g4, g4_merges)))
 
