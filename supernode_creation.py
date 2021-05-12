@@ -396,15 +396,7 @@ k = 2
 l = 5
 r = 2 ** 12
 
-# print(g1)
-# hg1, hf1 = hash_graph(k, l, r, g1)
-# g1merges = []
-# for i in range(5):
-#     if i in g1.keys():
-#         g_candidates = get_candidates(g1, k, l, r, hg1, i, hf1)
-#         print(g_candidates)
-#         create_supernode(g1, i, 0.05, g_candidates, g1merges)
-#         print(g1)
+
 
 def make_visual(graph):
     global graph_num
@@ -417,13 +409,9 @@ def make_visual(graph):
 
 # timeE1 = time.time()
 print("VISUALIZING A GRAPH")
-g9 = erdos_renyi(15, 0.15)
+g9 = erdos_renyi(10, 0.3)
 hg9, hf9 = hash_graph(k, l, r, g9)
-V = GraphVisualization()
-for node in g9.keys():
-    for nbr in g9[node].keys():
-        V.addEdge(node, nbr)
-
+make_visual(g9)
 nm9 = 0
 g9_merges = []
 for i in range(len(g9)):
