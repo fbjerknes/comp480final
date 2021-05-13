@@ -70,10 +70,13 @@ def produce_hash(k, l):
     :return: the list of hash tables
     """
     h = []
+
     for i in range(l):
         n = []
+
         for j in range(k):
             n.append(genhash())
+
         h.append(n)
     return h
 
@@ -91,11 +94,15 @@ def minhash(A, m, hashes):
     for i in range(m):
         cur = hashes[i]
         vals = []
+
         for j in A:
             #Append a hash value of every set to a list
+
             vals.append(cur(j))
+
         #If there are no hash values, return 0, otherwise return the minimum of the hash values, hence minhash.
         hashvalues.append(0 if len(vals) == 0 else min(vals))
+
     #return the set of all minhash values for every hash function
     return hashvalues
 
@@ -115,10 +122,13 @@ class HashTable:
         self.r = R
         #hash tables
         self.tables = []
+
         for i in range(self.l):
             self.tables.append(defaultdict(list))
+
         #random linear combination constants for hash bucket storage.
         self.a = []
+
         for i in range(self.k + 1):
             self.a.append(random.randint(0, 2**32 - 1))
 
@@ -131,6 +141,7 @@ class HashTable:
         for i in range(self.l):
             #uses the hashcodes to find a bucket for each table.
             bucket = self.a[-1]
+
             for j in range(self.k):
                 bucket += hashcodes[i][j] * self.a[j]
             bucket = (bucket % (2**31 - 1)) % self.r
@@ -160,6 +171,14 @@ class HashTable:
 
 
 def generate_hashcodes(s, k, l, funcs):
+    """
+    Hashes an object using the given hash functions
+    :param s: the object
+    :param k: number of hash functions per table
+    :param l: number of hash tables
+    :param funcs: all hash fuctions
+    :return: table of all hash values
+    """
     hashcodes = []
     for i in range(l):
         hashcodes.append(minhash(s, k, funcs[i]))
@@ -167,64 +186,145 @@ def generate_hashcodes(s, k, l, funcs):
 
 
 def dist(unmerged, merged, nodes_merged):
+    """
+    Calculates similarity between a merged and unmerged graph
+    :param unmerged: unmerged graph
+    :param merged: merged graph
+    :param nodes_merged: nodes merged in the graph
+    :return: Average value of all Jaccard similarities of neighborhoods of merged nodes in the 2 graphs.
+    """
+
     jaccards = []
     for mergelist in nodes_merged:
+
+        #The supernode is always the first node of the list.
         supernode = mergelist[0]
         merged_nbhd = set(merged[supernode].keys())
+        #iterate through every node the supernode was merged with
+
         for n in mergelist:
+            #find the neighborhood of the node in the merged and unmerged graph
             unmerged_nbhd = set(unmerged[n].keys())
             intersection = unmerged_nbhd & merged_nbhd
             union = unmerged_nbhd | merged_nbhd
+
+            #calculate the Jaccard similarity between the merged and unmerged neighborhoods, add to the list
             intersectionsize = (float)(len(intersection))
             jaccard = intersectionsize / len(union)
             jaccards.append(jaccard)
+
+    # return average of all Jaccard values
     return np.average(jaccards)
 
 def hash_graph(k, l, r, graph):
+    """
+    Hash entire graph into a table of desired size using LSH.
+    :param k: number of hash functions per table
+    :param l: number of tables
+    :param r: range of hash function
+    :param graph: the graph to be hashed
+    :return: A hash table that contains the hash values of the graph, in addition to the hash functions themselves.
+    """
+
+    #creaate hash table and hash functions
     graph_lsh = HashTable(k, l, r)
     hash_funcs = produce_hash(k, l)
+
+    #insert each node of the graph into the hash table
     for i in graph.keys():
         codes = generate_hashcodes(graph[i].keys(), k, l, hash_funcs)
         graph_lsh.insert(codes, i)
+
+    #return the hash table and hash functions
     return graph_lsh, hash_funcs
 
 def get_candidates(graph, k, l, r, hashed_graph, query_node, hash_funcs):
+    """
+    Using LSH, get the candidates for supernode creation
+    :param graph: graph to be compressed
+    :param k: number of hash functions per table
+    :param l: number of tables
+    :param r: range of hash function
+    :param hashed_graph: hashed version of the graph
+    :param query_node: node to be compressed into
+    :param hash_funcs: hash functions to use for the hash table
+    :return:
+    """
     query_codes = generate_hashcodes(graph[query_node].keys(), k, l, hash_funcs)
-    candidates = hashed_graph.lookup(query_codes)
     return hashed_graph.lookup(query_codes)
 
 
 def create_supernode(graph, query_node, edr_threshold, list_of_candidates, cur_nodes_merged):
+    """
+    Using a set of candidates, merge nodes that satisfy certain criteria into a supernode
+    :param graph: graph to be compressed
+    :param query_node: will become the supernode
+    :param edr_threshold: minimum EDR value for merging
+    :param list_of_candidates: possible nodes to merge into the supernode
+    :param cur_nodes_merged: List of nodes currently merged, to be added to with the current supernode
+    :return: number of nodes merged into the supernode
+    """
+
     nodes_merged = 0
+    #visualize the graph if it's small enough
     vis = len(graph.keys()) < 20
+
+    #you can't merge if the query node isn't in the graph.
     if query_node not in graph or not graph[query_node]:
         return 0
+
+    #test each node in the list of candidates
     for node in list_of_candidates:
+
+        #calculate the neighbors of the query node
         query_neighbors = graph[query_node]
+
+        #number of neighbors of query node
         nqsize = len(query_neighbors.keys())
+
+        #if the candidate is still in the graph and it isn't the query node, you can consider it for merging.
         if node in graph and node != query_node:
             other_neighbors = graph[node]
             nvsize = len(other_neighbors.keys())
+
+            #we want the size of a potential merging of the two nodes
             potential_compression = query_neighbors | other_neighbors
             nssize = len(potential_compression.keys())
+
+            #EDR value will tell us if we merge this node
             edr = (nqsize + nvsize - nssize) / (nqsize + nvsize)
+
+            #We don't want to merge nodes that don't have enough neighbors compared to the query
             sizedif = nqsize / nssize
             if (sizedif < 1 and sizedif != 0):
                 sizedif = 1/sizedif
-            # print(edr)
+
             if (edr > edr_threshold and sizedif < 6):
+                #MERGING PROCESS
                 nodes_merged += 1
+
                 for nbr in graph[node].keys():
+                    #We want to remove references to the node to be merged in its neighbors
                     if nbr == node:
                         continue
                     wgt = graph[node][nbr]
+
+                    #Add the neighbor to the supernode and keep the maximum weight.
                     if nbr not in graph[query_node].keys() or wgt < graph[query_node][nbr]:
                         graph[nbr][query_node] = wgt
                         graph[query_node][nbr] = wgt
+
+                    #delete the reference to the merged nodode
                     del graph[nbr][node]
+
+                #complete the compression
                 del graph[node]
+
+                #Add the new node and its supernode to the list of merged node lists.
                 mergequery = False
                 mergenode = False
+
+                #find if the supernode and the merged node are already in the merged list.
                 for i in range(len(cur_nodes_merged)):
                     if query_node in cur_nodes_merged[i]:
                         mergequery = True
@@ -234,16 +334,28 @@ def create_supernode(graph, query_node, edr_threshold, list_of_candidates, cur_n
                         nodelist = i
                     if mergenode and mergequery:
                         break
+
+                #If neither node is in the merged list, create a new entry.
                 if not mergenode and not mergequery:
                     cur_nodes_merged.append([query_node, node])
+
+
                 elif mergequery:
                     if mergenode:
+
+                        #If both nodes are in the merged list, append the merged node's list to the supernode's list
+                        #and delete the merged node.
                         cur_nodes_merged[querylist].extend(cur_nodes_merged[nodelist])
                         cur_nodes_merged.pop(nodelist)
+
                     else:
+                        #If just the supernode is in the merged list, add the new merged node to its list.
                         cur_nodes_merged[querylist].append(node)
                 else:
+                    #If just the merged node is in the merged list, it becomes the supernode's list.
                     cur_nodes_merged[nodelist].insert(0, query_node)
+
+                    #If the graph is small, visualize it.
                 if vis:
                     make_visual(graph)
     return nodes_merged
@@ -292,7 +404,15 @@ def total_degree(g):
 
 
 def random_graph_generator(n):
+    """
+    Generates a semi-random clustered graph
+    :param n: number of nodes in the graph
+    :return: the random graph.
+    """
     rg = defaultdict(lambda: defaultdict(int))
+
+    #If the nodes are within the same range of 10, the probability of an edge between them is 0.9.
+    #Otherwise, the probability of an edge between them is 0.001.
     for i in range(n):
         for j in range(i):
             ran = random.random()
@@ -320,6 +440,10 @@ r = 2 ** 12
 
 
 def make_visual(graph):
+    """
+    Visualize a graph
+    :param graph: graph to be visualized.
+    """
     global graph_num
     V = GraphVisualization()
     for node in graph.keys():
@@ -328,8 +452,7 @@ def make_visual(graph):
     V.visualize(graph_num)
     graph_num += 1
 
-# timeE1 = time.time()
-print("VISUALIZING A GRAPH")
+###VISUALIZE A SMALL GRAPH AND PERFORM VERY FEW COMPRESS
 g9 = erdos_renyi(10, 0.3)
 hg9, hf9 = hash_graph(k, l, r, g9)
 make_visual(g9)
@@ -346,7 +469,9 @@ for i in range(len(g9)):
 
 plt.show()
 
+
 def run_tests():
+
     ### ERDOS RENYI TEST
     print("ERDOS REYNI")
     g3 = erdos_renyi(10000, 0.001)
@@ -360,11 +485,13 @@ def run_tests():
     ###ORIGINAL UNMERGED GRAPH
     g5 = copy.deepcopy(g3)
 
+    ###LSH AlGORITHM TIME TEST
     time1 = time.time()
+    #Hash the graph
     hg3, hf3 = hash_graph(k, l, r, g3)
     nodes_merged = 0
     g3_merges = []
-
+    #Merge a given number of nodes.
     for i in range(len(g3)):
         if i in g3.keys():
             g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
@@ -375,10 +502,11 @@ def run_tests():
 
     print("Nodes Merged with LSH: " + str(nodes_merged))
     time2 = time.time()
+
     print("Time for merging nodes with LSH: " + str(time2 - time1))
+
+    ###NON-LSH TIME TEST
     time3 = time.time()
-
-
     nm = 0
     g4_merges = []
 
@@ -393,6 +521,9 @@ def run_tests():
     print("Nodes Merged without LSH: " + str(nm))
     time4 = time.time()
     print("Time for merging nodes without LSH: " + str(time4 - time3))
+
+    ###Use the similalrity function to see how similar the two merged graphs are to the original graph
+
     print("Closeness of Merged Sets, with LSH: " + str(dist(g5, g3, g3_merges)))
     print("Closeness of Merged Sets, without LSH: " + str(dist(g5, g4, g4_merges)))
     print("")
@@ -401,6 +532,7 @@ def run_tests():
 
     print("CLUSTERED TEST")
 
+    ###SAME TIME AND ACCURACY TESTS AS PREVIOUS, just with the clustered graph.
     g6 = random_graph_generator(10000)
     g7 = copy.deepcopy(g6)
     g8 = copy.deepcopy(g6)
@@ -441,11 +573,10 @@ def run_tests():
 
 
 def produce_time_series():
+    """
+    Compare the simlarity scores of the LSH vs non-LSH methods after each iteration of node-merging
+    """
     g3 = erdos_renyi(10000, 0.001)
-
-    # print(g3)
-    # timeE2 = time.time()
-    # print(str(timeE2 - timeE1))
 
     ###FOR NON-LSH ALGORITHM
     g4 = copy.deepcopy(g3)
@@ -456,8 +587,10 @@ def produce_time_series():
     nodes_merged = 0
     g3_merges = []
 
+    #Similarity values
     er_simi = []
 
+    ###Compute similarity values using LSH
     for i in range(len(g3)):
         if i in g3.keys():
             g3_candidates = get_candidates(g3, k, l, r, hg3, i, hf3)
@@ -472,6 +605,7 @@ def produce_time_series():
     g4_merges = []
     bf_simi = []
 
+    ###Compute similarity values using non-LSH method.
     for i in range(len(g4)):
         if i in g4.keys():
             g4_candidates = list(g4.keys())
@@ -487,6 +621,11 @@ def produce_time_series():
 
 
 def produce_plot_data():
+    """
+    Plot all desired data
+    """
+
+    ###ERDOS RENYI GRAPH PLOTS
     er_data = [[[], [], []], [[], [], []]]
     for a in range(NUM_DATA_POINTS):
         print("a = " + str(a))
@@ -541,7 +680,7 @@ def produce_plot_data():
     er_plot_similarity = {'Without LSH': er_data[1][2], 'With LSH': er_data[0][2]}
     er_plot_differences = {'Time Difference': time_dif, 'Accuracy Difference': sim_dif}
 
-
+    ###CLUSTERED GRAPH PLOTS
     rand_data = [[[], [], []], [[], [], []]]
 
     for a in range(NUM_DATA_POINTS):
@@ -599,8 +738,14 @@ data = produce_plot_data()
 
 actual = pd.DataFrame(data=series)
 
+#Plot the time series
 actual.plot(x='Nodes Removed')
 plt.show()
+
+#For both the Erdos-Reyni and the clustered graph, plot the following comparisons with the non-LSH algorithm:
+#1. Time elapsed of LSH vs. Time Elapsed of non-LSH
+#2. Accuracy of LSH vs. Accuracy of non-LSH
+#3. Ratio of LSH-to-non-LSH time elapsed vs Ratio of LSH-to-non-LSH accuracy.
 
 for i in range(6):
     graph_num += 1
