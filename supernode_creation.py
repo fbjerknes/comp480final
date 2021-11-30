@@ -12,6 +12,7 @@ from sklearn.utils import murmurhash3_32
 import time
 import copy
 import networkx as nx
+import read_graph
 
 NODES_MERGED_THRESHOLD = 200
 EDR_THRESHOLD_ERDOS = 0.1
@@ -450,32 +451,33 @@ def make_visual(graph):
         for nbr in g9[node].keys():
             V.addEdge(node, nbr)
     V.visualize(graph_num)
-    graph_num += 1
+#     graph_num += 1
 
-###VISUALIZE A SMALL GRAPH AND PERFORM VERY FEW COMPRESS
-g9 = erdos_renyi(10, 0.3)
-hg9, hf9 = hash_graph(k, l, r, g9)
-make_visual(g9)
-nm9 = 0
-g9_merges = []
-for i in range(len(g9)):
-    if i in g9.keys():
-        g9_candidates = g9_candidates = get_candidates(g9, k, l, r, hg9, i, hf9)
-        nm9 += create_supernode(g9, i, EDR_THRESHOLD_ERDOS, g9_candidates, g9_merges)
-    if nm9 > 3:
-        break
-
-
-
-plt.show()
+#
+# ###VISUALIZE A SMALL GRAPH AND PERFORM VERY FEW COMPRESS
+# g9 = erdos_renyi(10, 0.3)
+# hg9, hf9 = hash_graph(k, l, r, g9)
+# make_visual(g9)
+# nm9 = 0
+# g9_merges = []
+# for i in range(len(g9)):
+#     if i in g9.keys():
+#         g9_candidates = g9_candidates = get_candidates(g9, k, l, r, hg9, i, hf9)
+#         nm9 += create_supernode(g9, i, EDR_THRESHOLD_ERDOS, g9_candidates, g9_merges)
+#     if nm9 > 3:
+#         break
+#
+#
+#
+# plt.show()
 
 
 def run_tests():
-
     ### ERDOS RENYI TEST
-    print("ERDOS REYNI")
-    g3 = erdos_renyi(10000, 0.001)
-
+    print("REAL WORLD")
+    g3 = read_graph.read_graph("USAir97.mtx")
+    g = open("graph_out.txt", "w")
+    g.write(str(g3))
     #print(g3)
     # timeE2 = time.time()
     # print(str(timeE2 - timeE1))
@@ -732,6 +734,7 @@ def produce_plot_data():
 
     return er_plot_time, er_plot_similarity, er_plot_differences, rand_plot_time, rand_plot_similarity, rand_plot_differences
 
+run_tests()
 
 series = produce_time_series()
 data = produce_plot_data()
