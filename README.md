@@ -1,3 +1,3 @@
 # COMP 480 Final Project and Subsequent Work
 
-Graph Compression Technique
+Locality-Sensitive Hashing in Graph Compression
